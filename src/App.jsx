@@ -4,6 +4,8 @@ import LoginPage from "./components/pages/LoginPage";
 import InputGroup from "./components/pages/InputGroup";
 import RegisterPage from "./components/pages/RegisterPage";
 import BuyerEnd from "./components/pages/BuyerEnd";
+import 'bootstrap/dist/css/bootstrap.min.css';
+
 
 const App = () => {
   return (

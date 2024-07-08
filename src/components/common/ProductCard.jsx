@@ -1,12 +1,14 @@
 import React from "react";
+import "../../css/newcss.css";
 
-export default function ProductCard({name}) {
-
+export default function ProductCard({ product }) {
     return (
-        <div class="col-md-4 product1">
-            <div class="product bg_${item.product_id}_Img">
-              <button type="button" class="btn btn-primary">{name}</button>
+        <div className="col-md-4 product1">
+            <div className="product" style={{ position: 'relative', display: 'inline-block' }}>
+                <img src={`data:img/png;base64,${product.image_src}`} className="product-image"/>
+                <button type="button" className="btn btn-primary product-name">{product.product_name}</button>
             </div>
-          </div>
+        </div>
     );
-  }
+}
+

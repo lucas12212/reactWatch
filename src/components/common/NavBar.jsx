@@ -1,18 +1,25 @@
-import React from "react";
+import React, { useState } from "react";
 import logo from '../../assets/fb.png'; // Assume this is the correct path
 import cartImage from '../../assets/cart.png'; // Assume this is the correct path
 import { Link } from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
-export default function NavBar() {
+export default function NavBar({ openFilterModal }) {
+  const [showModal, setShowModal] = useState(false);
 
-    return (
-        <nav className="navbar navbar-expand-lg navbar-light custom-navbar">
+  const handleShow = () => {
+    console.log("Filter button clicked, showing modal");
+    openFilterModal();
+  };
+
+  return (
+    <>
+      <nav className="navbar navbar-expand-lg navbar-light bg-light" style={{ paddingRight: '100px' }}>
         <div className="container-fluid">
-            <Link className="navbar-brand" to="/">
-            <img src={logo} alt="Logo" className="" />
-            </Link>
-
-            <button
+          <Link className="navbar-brand" to="/">
+            <img src={logo} alt="Logo" />
+          </Link>
+          <button
             className="navbar-toggler"
             type="button"
             data-bs-toggle="collapse"
@@ -20,76 +27,61 @@ export default function NavBar() {
             aria-controls="navbarSupportedContent"
             aria-expanded="false"
             aria-label="Toggle navigation"
-            >
+          >
             <span className="navbar-toggler-icon"></span>
-            </button>
+          </button>
 
-            <div className="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul className="navbar-nav mb-2 mb-lg-0">
-                <li className="nav-item">
+          <div className="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+              <li className="nav-item">
                 <Link className="nav-link" to="/">
-                    Home
+                  Home
                 </Link>
-                </li>
-                <li className="nav-item">
+              </li>
+              <li className="nav-item">
                 <Link className="nav-link" to="/product">
-                    Product
+                  Product
                 </Link>
-                </li>
+              </li>
             </ul>
 
-            <form className="d-flex w-100 me-5 ms-5" action="" method="get">
-                <input
-                className="form-control me-2 search-input"
+            <form className="d-flex" style={{ marginLeft: '-20px' }}> {/* Adjust marginLeft to move elements left */}
+              <input
+                className="form-control me-2"
                 type="search"
-                placeholder="Search for everything and anything"
+                placeholder="Search"
                 aria-label="Search"
-                name="search"
-                />
-                <button
-                className="btn btn-outline-primary"
-                style={{ marginRight: "7px" }}
-                type="submit"
-                >
+              />
+              <button className="btn btn-outline-success me-2" type="submit">
                 Search
-                </button>
-                {/* Filter Button */}
-                <button
+              </button>
+              <button
                 type="button"
-                className="btn btn-primary"
-                data-bs-toggle="modal"
-                data-bs-target="#filterModal"
-                >
+                className="btn btn-primary ms-2"
+                onClick={handleShow}
+              >
                 Filter
-                </button>
+              </button>
             </form>
 
-            <div className="d-flex">
-                <div className="cart-icon">
-                <Link to="newcart.html">
-                    <img className="cart-image" src={cartImage} alt="Shopping Cart" />
-                    <span id="cart-count"></span>
-                </Link>
-                </div>
-                <Link
-                className="nav-link btn btn-outline-purple mx-2"
-                to="newcart.html"
-                >
+            <div className="d-flex align-items-center ms-3" style={{ marginLeft: '-20px' }}> {/* Adjust marginLeft to move elements left */}
+              <Link to="/newcart.html">
+                <img className="cart-image me-2" src={cartImage} alt="Cart" />
+              </Link>
+              <Link className="nav-link btn btn-outline-purple ms-2 me-2" to="/newcart.html">
                 Cart
-                </Link>
-                <button
-                id="logoutBtn"
-                className="nav-link btn btn-outline-purple mx-2"
+              </Link>
+              <button
+                className="nav-link btn btn-outline-purple ms-2"
                 onClick={() => console.log("Implement logout logic")}
-                >
+              >
                 Logout
-                </button>
+              </button>
             </div>
-            </div>
+          </div>
         </div>
-        </nav>
-
-    );
-  }
-
+      </nav>
+    </>
+  );
+}
 

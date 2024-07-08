@@ -3,53 +3,196 @@ import "../../css/newcss.css";
 import banner from "../../assets/banner.png";
 import NavBar from "../common/NavBar.jsx";
 import axios from "axios";
-import ProductCard from "../common/ProductCard.jsx"
+import ProductCard from "../common/ProductCard.jsx";
+import ProductModal from "../common/ProductModal.jsx";
+import FilterModal from "../common/FilterModal.jsx";
+import Footer from "../common/Footer.jsx";
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 const BuyerEnd = () => {
-    const [productList,setProductList] = useState([]);
+  const [productList, setProductList] = useState([]);
+  const [brandList, setBrandList] = useState([]);
+  const [selectedProducts, setSelectedProducts] = useState({}); // Object to keep track of open modals
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [brand, setBrand] = useState("Seiko");
+  const [minPrice, setMinPrice] = useState('');
+  const [maxPrice, setMaxPrice] = useState('');
+  const [rating, setRating] = useState('');
+
   useEffect(() => {
-    handleSubmit();
-  },[]);
-  const handleSubmit = async (e) => {
+    fetchProducts();
+    fetchBrands();
+  }, [brand, minPrice, maxPrice, rating]);
+
+  const fetchProducts = async () => {
+    console.log("Fetching products...");
+
     try {
-      // Replace with your actual endpoint
-      const response = await axios.post(
+      const response = await axios({
+        method: 'post',
+        url: 'http://localhost:8888/Supply_Chain_Project/api/product.php',
+        data: {
+          brand,
+          min_price: minPrice || undefined,
+          max_price: maxPrice || undefined,
+          rating
+        },
+        headers: {
+          "Cache-Control": "no-cache",
+          "Content-Type": "application/json",
+        }
+      });
+      console.log("Fetched products response:", response); // Debug: Verify full response
+      setProductList(response.data.products || []);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+      setProductList([]);
+    }
+  };
+
+  const fetchBrands = async () => {
+    console.log("Fetching brands...");
+    try {
+      const response = await axios.put(
         "http://localhost:8888/Supply_Chain_Project/api/product.php",
         {},
         {
           headers: {
             "Cache-Control": "no-cache",
             "Content-Type": "application/json",
-            "Access-Control-Allow-Origin": "*",
           },
         }
       );
-      console.log(response.data);
-      setProductList(response.data.products)
-      console.log(productList)
-      // Handle successful login here (e.g., redirect, store token, etc.)
+      console.log("Fetched brands response:", response); // Debug: Verify full response
+      setBrandList(response.data.brands || []);
     } catch (error) {
-      console.error("Login error: ", error);
-      // Handle error (e.g., show error message)
+      console.error("Error fetching brands:", error);
+      setBrandList([]);
     }
   };
 
+  const fetchProductCard = async (productId) => {
+    console.log(`Fetching ProductCard for product ID: ${productId}...`);
+    try {
+      const response = await axios({
+        method: 'post',
+        url: `http://localhost:8888/Supply_Chain_Project/api/productCard.php`,
+        data: { product_id: productId },
+        headers: {
+          "Cache-Control": "no-cache",
+          "Content-Type": "application/json",
+        }
+      });
+      console.log("Fetched product data: ", response); // Debug: Verify product data
+      if (response.data.product) {
+        setSelectedProducts(prevState => {
+          const newSelectedProducts = {
+            ...prevState,
+            [productId]: response.data.product
+          };
+          console.log('Selected Products after update:', newSelectedProducts);
+          return newSelectedProducts;
+        });
+      } else {
+        console.log("No product data found in response");
+        setSelectedProducts(prevState => ({
+          ...prevState,
+          [productId]: null
+        }));
+      }
+    } catch (error) {
+      console.error("Error fetching product data: ", error);
+      setSelectedProducts(prevState => ({
+        ...prevState,
+        [productId]: null
+      }));
+    }
+  };
+
+  const openModal = (product) => {
+    console.log('Opening modal for product:', product); // Debug: Verify product data
+    fetchProductCard(product.product_id); // Fetch product card data when opening the modal
+  };
+
+  const closeModal = (productId) => {
+    setSelectedProducts(prevState => {
+      const newState = { ...prevState };
+      delete newState[productId];
+      return newState;
+    });
+  };
+
+  const openFilterModal = () => {
+    setShowFilterModal(true);
+  };
+
+  const closeFilterModal = () => {
+    setShowFilterModal(false);
+  };
+
+  const handleFilter = (brand, minPrice, maxPrice, rating) => {
+    console.log('Applying filters:', { brand, minPrice, maxPrice, rating }); // Debug: Verify filter values
+    setBrand(brand);
+    setMinPrice(minPrice);
+    setMaxPrice(maxPrice);
+    setRating(rating);
+  };
+
+  useEffect(() => {
+    console.log('Product List:', productList); // Debug: Verify product list state
+  }, [productList]);
+
+  useEffect(() => {
+    console.log('Selected Products:', selectedProducts); // Debug: Verify selected products state
+  }, [selectedProducts]);
+
   return (
-    <div>
-      <NavBar />
+    <div style={{ backgroundColor: '#f0f0f0', minHeight: '100vh' }}>
+      <NavBar openFilterModal={openFilterModal} />
       <div className="banner">
-        <img src={banner} alt="Banner Photo" className="" />
+        <img src={banner} alt="Banner Photo" />
       </div>
       <div className="container">
-        <h2>Featured Products</h2>
+        <h2 className="center-text margin-bottom">Featured Products</h2>
         <div id="productContainer" className="row justify-content-between">
-          {productList.map(function(product){
-            return(
-                <ProductCard name={product.product_name}/>
-            )
-          })}
+          {productList.length > 0 ? (
+            productList.map((product) => (
+              <div
+                className="col-md-4"
+                key={product.product_id} // Ensure unique key
+                onClick={() => openModal(product)}
+              >
+                <ProductCard product={product} />
+                {selectedProducts[product.product_id] && (
+                  <ProductModal
+                    product={selectedProducts[product.product_id]}
+                    isOpen={!!selectedProducts[product.product_id]}
+                    onClose={() => closeModal(product.product_id)}
+                    debugInfo={{
+                      product_id: product.product_id,
+                      product_cost: selectedProducts[product.product_id]?.product_cost,
+                      stocks_left: selectedProducts[product.product_id]?.stocks_left,
+                      no_reviews: selectedProducts[product.product_id]?.no_reviews,
+                      avg_rating: selectedProducts[product.product_id]?.avg_rating
+                    }}
+                  />
+                )}
+              </div>
+            ))
+          ) : (
+            <p>No products available</p>
+          )}
         </div>
       </div>
+      {showFilterModal && (
+        <FilterModal
+          isOpen={showFilterModal}
+          onClose={closeFilterModal}
+          brands={brandList}
+          test={handleFilter}
+        />
+      )}
+      <Footer />
     </div>
   );
 };
