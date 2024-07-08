@@ -12,9 +12,9 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 const BuyerEnd = () => {
   const [productList, setProductList] = useState([]);
   const [brandList, setBrandList] = useState([]);
-  const [selectedProducts, setSelectedProducts] = useState({}); // Object to keep track of open modals
+  const [selectedProduct, setSelectedProduct] = useState(null); // Object to keep track of open modals
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [brand, setBrand] = useState("Seiko");
+  const [brand, setBrand] = useState("");
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [rating, setRating] = useState('');
@@ -85,27 +85,13 @@ const BuyerEnd = () => {
       });
       console.log("Fetched product data: ", response); // Debug: Verify product data
       if (response.data.product) {
-        setSelectedProducts(prevState => {
-          const newSelectedProducts = {
-            ...prevState,
-            [productId]: response.data.product
-          };
-          console.log('Selected Products after update:', newSelectedProducts);
-          return newSelectedProducts;
-        });
+        console.log(response.data.product)
+        setSelectedProduct(response.data.product);
       } else {
         console.log("No product data found in response");
-        setSelectedProducts(prevState => ({
-          ...prevState,
-          [productId]: null
-        }));
       }
     } catch (error) {
       console.error("Error fetching product data: ", error);
-      setSelectedProducts(prevState => ({
-        ...prevState,
-        [productId]: null
-      }));
     }
   };
 
@@ -114,12 +100,8 @@ const BuyerEnd = () => {
     fetchProductCard(product.product_id); // Fetch product card data when opening the modal
   };
 
-  const closeModal = (productId) => {
-    setSelectedProducts(prevState => {
-      const newState = { ...prevState };
-      delete newState[productId];
-      return newState;
-    });
+  const closeModal = () => {
+    setSelectedProduct(null);
   };
 
   const openFilterModal = () => {
@@ -138,14 +120,6 @@ const BuyerEnd = () => {
     setRating(rating);
   };
 
-  useEffect(() => {
-    console.log('Product List:', productList); // Debug: Verify product list state
-  }, [productList]);
-
-  useEffect(() => {
-    console.log('Selected Products:', selectedProducts); // Debug: Verify selected products state
-  }, [selectedProducts]);
-
   return (
     <div style={{ backgroundColor: '#f0f0f0', minHeight: '100vh' }}>
       <NavBar openFilterModal={openFilterModal} />
@@ -163,20 +137,6 @@ const BuyerEnd = () => {
                 onClick={() => openModal(product)}
               >
                 <ProductCard product={product} />
-                {selectedProducts[product.product_id] && (
-                  <ProductModal
-                    product={selectedProducts[product.product_id]}
-                    isOpen={!!selectedProducts[product.product_id]}
-                    onClose={() => closeModal(product.product_id)}
-                    debugInfo={{
-                      product_id: product.product_id,
-                      product_cost: selectedProducts[product.product_id]?.product_cost,
-                      stocks_left: selectedProducts[product.product_id]?.stocks_left,
-                      no_reviews: selectedProducts[product.product_id]?.no_reviews,
-                      avg_rating: selectedProducts[product.product_id]?.avg_rating
-                    }}
-                  />
-                )}
               </div>
             ))
           ) : (
@@ -190,6 +150,13 @@ const BuyerEnd = () => {
           onClose={closeFilterModal}
           brands={brandList}
           test={handleFilter}
+        />
+      )}
+      {selectedProduct != null && (
+        <ProductModal
+          product={selectedProduct}
+          isOpen={selectedProduct != null}
+          onClose={() => closeModal()}
         />
       )}
       <Footer />
