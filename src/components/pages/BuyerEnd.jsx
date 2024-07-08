@@ -12,21 +12,25 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 const BuyerEnd = () => {
   const [productList, setProductList] = useState([]);
   const [brandList, setBrandList] = useState([]);
-  const [selectedProducts, setSelectedProducts] = useState({}); // Object to keep track of open modals
+  const [selectedProductId, setSelectedProductId] = useState(null); // Object to keep track of open modals
+  const [productInfo, setProductInfo] = useState([]);
   const [showFilterModal, setShowFilterModal] = useState(false);
-  const [brand, setBrand] = useState("Seiko");
+  const [brand, setBrand] = useState("");
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [rating, setRating] = useState('');
 
   useEffect(() => {
     fetchProducts();
-    fetchBrands();
   }, [brand, minPrice, maxPrice, rating]);
+
+  useEffect(() => {
+    fetchBrands();
+    fetchProductInfo();
+  }, []);
 
   const fetchProducts = async () => {
     console.log("Fetching products...");
-
     try {
       const response = await axios({
         method: 'post',
@@ -71,55 +75,41 @@ const BuyerEnd = () => {
     }
   };
 
-  const fetchProductCard = async (productId) => {
-    console.log(`Fetching ProductCard for product ID: ${productId}...`);
+  const fetchProductInfo = async () => {
+    console.log(`Fetching Product Info`);
     try {
       const response = await axios({
-        method: 'post',
+        method: 'get',
         url: `http://localhost:8888/Supply_Chain_Project/api/productCard.php`,
-        data: { product_id: productId },
         headers: {
           "Cache-Control": "no-cache",
           "Content-Type": "application/json",
         }
       });
-      console.log("Fetched product data: ", response); // Debug: Verify product data
-      if (response.data.product) {
-        setSelectedProducts(prevState => {
-          const newSelectedProducts = {
-            ...prevState,
-            [productId]: response.data.product
-          };
-          console.log('Selected Products after update:', newSelectedProducts);
-          return newSelectedProducts;
-        });
+      if (response.data.products) {
+        let product_dict = {}
+        for (let product of response.data.products) {
+          product_dict[product["product_id"]] = product
+        }
+        setProductInfo(product_dict);
       } else {
         console.log("No product data found in response");
-        setSelectedProducts(prevState => ({
-          ...prevState,
-          [productId]: null
-        }));
       }
     } catch (error) {
       console.error("Error fetching product data: ", error);
-      setSelectedProducts(prevState => ({
-        ...prevState,
-        [productId]: null
-      }));
     }
   };
 
   const openModal = (product) => {
-    console.log('Opening modal for product:', product); // Debug: Verify product data
-    fetchProductCard(product.product_id); // Fetch product card data when opening the modal
+    console.log('Opening modal for product:', product); // Debug: Verify product data    
+    console.log(productInfo)
+    setSelectedProductId(product.product_id)
+    // fetchProductCard(product.product_id); // Fetch product card data when opening the modal
   };
 
   const closeModal = (productId) => {
-    setSelectedProducts(prevState => {
-      const newState = { ...prevState };
-      delete newState[productId];
-      return newState;
-    });
+    console.log("closing model")
+    setSelectedProductId(null);
   };
 
   const openFilterModal = () => {
@@ -142,10 +132,6 @@ const BuyerEnd = () => {
     console.log('Product List:', productList); // Debug: Verify product list state
   }, [productList]);
 
-  useEffect(() => {
-    console.log('Selected Products:', selectedProducts); // Debug: Verify selected products state
-  }, [selectedProducts]);
-
   return (
     <div style={{ backgroundColor: '#f0f0f0', minHeight: '100vh' }}>
       <NavBar openFilterModal={openFilterModal} />
@@ -159,21 +145,22 @@ const BuyerEnd = () => {
             productList.map((product) => (
               <div
                 className="col-md-4"
-                key={product.product_id} // Ensure unique key
-                onClick={() => openModal(product)}
+                key={product.product_id} // Ensure unique key                
               >
-                <ProductCard product={product} />
-                {selectedProducts[product.product_id] && (
+                <div onClick={() => openModal(product)}>
+                  <ProductCard product={product} />
+                </div>
+                {selectedProductId == product.product_id && (
                   <ProductModal
-                    product={selectedProducts[product.product_id]}
-                    isOpen={!!selectedProducts[product.product_id]}
+                    product={productInfo[product.product_id]}
+                    isOpen={!!productInfo[product.product_id]}
                     onClose={() => closeModal(product.product_id)}
                     debugInfo={{
                       product_id: product.product_id,
-                      product_cost: selectedProducts[product.product_id]?.product_cost,
-                      stocks_left: selectedProducts[product.product_id]?.stocks_left,
-                      no_reviews: selectedProducts[product.product_id]?.no_reviews,
-                      avg_rating: selectedProducts[product.product_id]?.avg_rating
+                      product_cost: productInfo[product.product_id]?.product_cost,
+                      stocks_left: productInfo[product.product_id]?.stocks_left,
+                      no_reviews: productInfo[product.product_id]?.no_reviews,
+                      avg_rating: productInfo[product.product_id]?.avg_rating
                     }}
                   />
                 )}
